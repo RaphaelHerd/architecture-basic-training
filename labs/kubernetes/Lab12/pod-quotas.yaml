@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-example  # Name of the Pod
+spec:
+  containers:
+  - name: nginx  # Name of the container
+    image: nginx:stable-alpine  # Container image to use (Nginx with Alpine Linux)
+    resources:
+      requests:  # Resource requests for the container
+        cpu: 200m  # Request 200 milliCPU (0.2 CPU cores)
+        memory: 10Mi  # Request 10 Mebibytes of memory
+      limits:  # Resource limits for the container
+        cpu: 500m  # Limit to 500 milliCPU (0.5 CPU cores)
+        memory: 20Mi  # Limit to 20 Mebibytes of memory
+    ports:
+    - containerPort: 80  # Port to expose on the container (HTTP)

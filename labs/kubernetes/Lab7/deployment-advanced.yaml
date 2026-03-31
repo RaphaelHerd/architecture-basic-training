@@ -1,0 +1,82 @@
+# Define a Kubernetes Deployment for an Nginx application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment # Name of the Deployment
+spec:
+  replicas: 2 # Set the desired number of replica Pods
+  selector:
+    matchLabels: # Labels used to select Pods managed by this Deployment
+      app: nginx
+  template:
+    metadata:
+      labels: # Labels to apply to Pods created by this template
+        app: nginx
+    spec:
+      containers:
+        - name: nginx # Container name
+          image: nginx:stable-alpine # Docker image to use
+          ports:
+            - containerPort: 80 # Port to expose on the container
+          livenessProbe:
+            httpGet:
+              path: / # Specify the path for the probe
+              port: 80   # Specify the port to probe
+            initialDelaySeconds: 15  # Delay before the probe is initiated
+            periodSeconds: 10        # How often to perform the probe before the container is healthy
+          readinessProbe:
+            httpGet:
+              path: / # Specify the path for the probe
+              port: 80   # Specify the port to probe
+            initialDelaySeconds: 5   # Delay before the probe is initiated
+            periodSeconds: 2         # How often to perform the probe before the container is healthy
+---
+# Define a Kubernetes Service for exposing the Nginx application
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service # Name of the Service
+spec:
+  selector:
+    app: nginx # Select Pods with this label to route traffic to
+  ports:
+    - protocol: TCP
+      port: 80 # Port on which the Service listens
+      targetPort: 80 # Port on which traffic is forwarded to in the Pods
+  type: ClusterIP # Type of Service, in this case, a ClusterIP service
+
+---
+#Define the ingress rule to your backend service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress # Name of the Ingress resource
+  annotations:
+    # since we use the aws ingress controller, we have to tell the cloud controller manager to create an public facing Application Loadblancer (ALB) for us
+    # see https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html for more details.
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    kubernetes.io/ingress.class: alb
+spec:
+  rules:
+    - 
+      # Set the desired hostname (replace with your actual domain if required)
+      # If you manage more than one hostname with your ingress controller, you have to provide the correct host
+      # host: your-domain.com
+      http:
+        paths:
+          - path: / # Specify the path on the domain
+            pathType: Prefix # Specify path type (Prefix matches URLs that start with /)
+            backend:
+              service:
+                name: nginx-service # Name of the backend Service
+                port:
+                  number: 80 # Port number to route traffic to on the Service
+          # example of multiple path in the same ingress rule
+          # - path: /app1 # Route traffic to /app1
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: app1-service
+          #       port:
+          #         number: 8080

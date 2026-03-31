@@ -1,0 +1,60 @@
+
+# Define a Kubernetes Deployment for an Nginx application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment # Name of the Deployment
+spec:
+  replicas: 2 # Set the desired number of replica Pods
+  selector:
+    matchLabels: # Labels used to select Pods managed by this Deployment
+      app: nginx
+  template:
+    metadata:
+      labels: # Labels to apply to Pods created by this template
+        app: nginx
+    spec:
+      containers:
+        - name: nginx # Container name
+          image: nginx:stable-alpine # Docker image to use
+          ports:
+            - containerPort: 80 # Port to expose on the container
+          resources:
+            requests:  # Resource requests for the container
+              cpu: 100m  # Request 100 milliCPU (0.2 CPU cores)
+            limits:  # Resource limits for the container
+              cpu: 500m  # Limit to 500 milliCPU (0.5 CPU cores)
+            
+# Define a Kubernetes Service for exposing the Nginx application
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service # Name of the Service
+spec:
+  selector:
+    app: nginx # Select Pods with this label to route traffic to
+  ports:
+    - protocol: TCP
+      port: 80 # Port on which the Service listens
+      targetPort: 80 # Port on which traffic is forwarded to in the Pods
+  type: ClusterIP # Type of Service, in this case, a ClusterIP service
+ 
+--- 
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nginx-hpa
+spec:
+  maxReplicas: 10
+  metrics:
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 5 # maybe has to be decreased depending on the load
+        type: Utilization
+    type: Resource
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: nginx-deployment #ensure the name is qual to the name of the deployment above

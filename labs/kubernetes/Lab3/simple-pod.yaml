@@ -1,0 +1,11 @@
+# Define a Kubernetes Pod
+apiVersion: v1 # Specifies the API version being used, in this case, "v1" for Kubernetes core resources
+kind: Pod # Indicates that we are defining a Pod resource
+metadata: # Metadata section for the Pod
+  name: pod-example # Specify the name of the Pod
+spec: # Specification section for the Pod
+  containers: # Define the containers that will run in this Pod
+    - name: nginx # Name of the container within the Pod
+      image: nginx:stable-alpine # Specifies the Docker image to use for this container
+      ports: # Define the ports to be exposed by the container
+        - containerPort: 80 # Port on which the container will listen for incoming traffic
